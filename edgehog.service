@@ -1,0 +1,15 @@
+[Unit]
+Description=EdgeHog NBA Arbitrage Paper Trading Bot
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/EdgeHog
+ExecStart=/home/pi/EdgeHog/venv/bin/python main.py
+Restart=always
+RestartSec=10
+EnvironmentFile=/home/pi/EdgeHog/.env
+
+[Install]
+WantedBy=multi-user.target
