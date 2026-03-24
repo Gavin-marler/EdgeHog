@@ -4,6 +4,7 @@ import logging
 from config import Config
 import database
 import ai_layer
+import scheduler as app_scheduler_module
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,9 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     logger.info(f"Discord Bot logged in as {bot.user}")
+    sched = app_scheduler_module.get_scheduler()
+    sched.start()
+    logger.info("Scheduler started inside bot event loop.")
     
 async def send_arb_alert(bet_data: dict):
     channel = bot.get_channel(Config.DISCORD_ARB_ALERTS_CHANNEL_ID)

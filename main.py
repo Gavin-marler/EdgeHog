@@ -23,19 +23,12 @@ def main():
         logger.error("Bankroll depleted. Please reset DB to run again.")
         return
         
-    # 2. Start Scheduler
-    app_scheduler = scheduler.get_scheduler()
-    app_scheduler.start()
-    logger.info("Scheduler started.")
-    
     # 3. Start Discord Bot (This is a blocking call)
     logger.info("Starting Discord bot...")
     try:
         run_bot()
     except KeyboardInterrupt:
         logger.info("Shutting down...")
-    finally:
-        app_scheduler.shutdown()
 
 if __name__ == "__main__":
     main()
