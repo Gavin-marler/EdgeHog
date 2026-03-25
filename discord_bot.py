@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="!", help_command=None, intents=intents)
 
 @bot.event
 async def on_ready():
@@ -80,12 +80,23 @@ async def send_daily_pnl():
     
     await channel.send(embed=embed)
 
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ **Access Denied:** You must be a server administrator to use this command.")
+    elif isinstance(error, commands.BadArgument):
+        await ctx.send("❌ **Invalid Input:** Please check your command formatting and numeric arguments.")
+    else:
+        logger.error(f"Command error: {error}")
+
 @bot.command(name="bankroll")
+@commands.has_permissions(administrator=True)
 async def cmd_bankroll(ctx):
     bal = database.get_bankroll()
     await ctx.send(f"💰 Current Virtual Bankroll: **${bal:.2f}**")
 
 @bot.command(name="openbets")
+@commands.has_permissions(administrator=True)
 async def cmd_openbets(ctx):
     bets = database.get_open_bets()
     if not bets:
@@ -98,12 +109,14 @@ async def cmd_openbets(ctx):
     await ctx.send(msg)
 
 @bot.command(name="pnl")
+@commands.has_permissions(administrator=True)
 async def cmd_pnl(ctx):
     bal = database.get_bankroll()
     profit = bal - Config.STARTING_BANKROLL
     await ctx.send(f"📈 **Running PnL:**\nStarting: ${Config.STARTING_BANKROLL:.2f}\nCurrent: ${bal:.2f}\nTotal Profit: **${profit:.2f}**")
 
 @bot.command(name="lastbet")
+@commands.has_permissions(administrator=True)
 async def cmd_lastbet(ctx):
     bets = database.get_recent_bets(1)
     if not bets:
@@ -113,10 +126,12 @@ async def cmd_lastbet(ctx):
     await ctx.send(f"🔍 **Last Bet:**\n{b['home_team']} vs {b['away_team']}\nPlaced: {b['placed_at']}\nGuarantee: ${b['guaranteed_profit']:.2f}")
 
 @bot.command(name="status")
+@commands.has_permissions(administrator=True)
 async def cmd_status(ctx):
     await ctx.send("✅ **EdgeHog Bot is live and polling.**")
 
 @bot.command(name="report")
+@commands.has_permissions(administrator=True)
 async def cmd_report(ctx):
     await ctx.send("⏳ Generating AI performance summary...")
     bal = database.get_bankroll()
@@ -140,11 +155,13 @@ async def cmd_report(ctx):
     await ctx.send(f"📄 **Performance Report:**\n\n{report_text}")
 
 @bot.command(name="threshold")
+@commands.has_permissions(administrator=True)
 async def cmd_threshold(ctx):
     val = float(database.get_config('arb_threshold', Config.MIN_PROFIT_MARGIN))
     await ctx.send(f"⚙️ Current Arb Threshold: **{val*100:.2f}%**")
 
 @bot.command(name="setthreshold")
+@commands.has_permissions(administrator=True)
 async def cmd_setthreshold(ctx, val: float):
     if not (0.5 <= val <= 10.0):
         await ctx.send("❌ Error: Threshold must be between 0.5 and 10.0")
@@ -154,6 +171,7 @@ async def cmd_setthreshold(ctx, val: float):
     await ctx.send(f"✅ Arb Threshold updated to **{val:.2f}%**")
 
 @bot.command(name="setstake")
+@commands.has_permissions(administrator=True)
 async def cmd_setstake(ctx, val: float):
     if not (1.0 <= val <= 25.0):
         await ctx.send("❌ Error: Max Stake must be between 1.0 and 25.0")
@@ -163,14 +181,59 @@ async def cmd_setstake(ctx, val: float):
     await ctx.send(f"✅ Max Stake % updated to **{val:.2f}%** of current bankroll")
 
 @bot.command(name="pause")
+@commands.has_permissions(administrator=True)
 async def cmd_pause(ctx):
     database.set_config('polling_paused', 'true')
     await ctx.send("⏸️ **Polling paused**. Will not check for new arbs until resumed.")
 
 @bot.command(name="resume")
+@commands.has_permissions(administrator=True)
 async def cmd_resume(ctx):
     database.set_config('polling_paused', 'false')
     await ctx.send("▶️ **Polling resumed**.")
+
+@bot.command(name="help")
+@commands.has_permissions(administrator=True)
+async def cmd_help(ctx):
+    embed = discord.Embed(
+        title="🤖 EdgeHog Command List",
+        color=discord.Color.gold()
+    )
+    
+    embed.add_field(
+        name="📊 Tracking",
+        value=(
+            "**!bankroll** — View current virtual bankroll\n"
+            "**!openbets** — List all open unresolved bets\n"
+            "**!pnl** — View running profit/loss since simulation start\n"
+            "**!lastbet** — Details on the most recent bet placed\n"
+            "**!report** — Generate a full AI performance summary"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="⚙️ Configuration",
+        value=(
+            "**!threshold** — View current arb threshold\n"
+            "**!setthreshold [%]** — Set minimum arb threshold (0.5–10%)\n"
+            "**!setstake [%]** — Set max stake per bet (1–25%)\n"
+            "**!pause** — Pause odds polling\n"
+            "**!resume** — Resume odds polling"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🔧 System",
+        value=(
+            "**!status** — Check if bot is live and polling\n"
+            "**!help** — Show this command list"
+        ),
+        inline=False
+    )
+    
+    await ctx.send(embed=embed)
 
 def run_bot():
     if not Config.DISCORD_BOT_TOKEN or Config.DISCORD_BOT_TOKEN == "your_discord_bot_token_here":
