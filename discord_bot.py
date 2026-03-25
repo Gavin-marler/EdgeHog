@@ -139,6 +139,39 @@ async def cmd_report(ctx):
     report_text = ai_layer.generate_weekly_report(stats)
     await ctx.send(f"📄 **Performance Report:**\n\n{report_text}")
 
+@bot.command(name="threshold")
+async def cmd_threshold(ctx):
+    val = float(database.get_config('arb_threshold', Config.MIN_PROFIT_MARGIN))
+    await ctx.send(f"⚙️ Current Arb Threshold: **{val*100:.2f}%**")
+
+@bot.command(name="setthreshold")
+async def cmd_setthreshold(ctx, val: float):
+    if not (0.5 <= val <= 10.0):
+        await ctx.send("❌ Error: Threshold must be between 0.5 and 10.0")
+        return
+    decimal_val = val / 100.0
+    database.set_config('arb_threshold', str(decimal_val))
+    await ctx.send(f"✅ Arb Threshold updated to **{val:.2f}%**")
+
+@bot.command(name="setstake")
+async def cmd_setstake(ctx, val: float):
+    if not (1.0 <= val <= 25.0):
+        await ctx.send("❌ Error: Max Stake must be between 1.0 and 25.0")
+        return
+    decimal_val = val / 100.0
+    database.set_config('max_stake_pct', str(decimal_val))
+    await ctx.send(f"✅ Max Stake % updated to **{val:.2f}%** of current bankroll")
+
+@bot.command(name="pause")
+async def cmd_pause(ctx):
+    database.set_config('polling_paused', 'true')
+    await ctx.send("⏸️ **Polling paused**. Will not check for new arbs until resumed.")
+
+@bot.command(name="resume")
+async def cmd_resume(ctx):
+    database.set_config('polling_paused', 'false')
+    await ctx.send("▶️ **Polling resumed**.")
+
 def run_bot():
     if not Config.DISCORD_BOT_TOKEN or Config.DISCORD_BOT_TOKEN == "your_discord_bot_token_here":
         logger.error("Discord bot token not configured.")

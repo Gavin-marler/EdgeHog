@@ -59,6 +59,23 @@ def init_db():
             (Config.STARTING_BANKROLL, datetime.datetime.now())
         )
         
+    # Config table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS config (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    ''')
+    
+    defaults = {
+        'arb_threshold': str(Config.MIN_PROFIT_MARGIN),
+        'max_stake_pct': str(Config.MAX_STAKE_PCT),
+        'max_open_bets': str(Config.MAX_OPEN_BETS),
+        'polling_paused': 'false'
+    }
+    for k, v in defaults.items():
+        cursor.execute('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)', (k, v))
+        
     conn.commit()
     conn.close()
 
@@ -76,6 +93,24 @@ def update_bankroll(new_amount: float):
     cursor.execute(
         'UPDATE bankroll SET amount = ?, updated_at = ? WHERE id = 1',
         (new_amount, datetime.datetime.now())
+    )
+    conn.commit()
+    conn.close()
+
+def get_config(key: str, default: str = None) -> str:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT value FROM config WHERE key = ?', (key,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else default
+
+def set_config(key: str, value: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        (key, str(value))
     )
     conn.commit()
     conn.close()

@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 async def poll_odds_job():
     logger.info("Polling odds...")
     try:
+        if database.get_config('polling_paused', 'false') == 'true':
+            logger.info("Polling is paused via config. Skipping.")
+            return
+            
         raw_odds = odds_poller.fetch_nba_odds()
         parsed_games = odds_poller.parse_odds_data(raw_odds)
         

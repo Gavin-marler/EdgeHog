@@ -59,10 +59,15 @@ def process_live_odds(parsed_games: list) -> list:
         return []
         
     open_bet_count = database.get_open_bet_count()
-    max_stake_allowed = current_bankroll * Config.MAX_STAKE_PCT
+    
+    min_profit_margin = float(database.get_config('arb_threshold', Config.MIN_PROFIT_MARGIN))
+    max_stake_pct = float(database.get_config('max_stake_pct', Config.MAX_STAKE_PCT))
+    max_open_bets = int(database.get_config('max_open_bets', Config.MAX_OPEN_BETS))
+    
+    max_stake_allowed = current_bankroll * max_stake_pct
     
     for game in parsed_games:
-        if open_bet_count >= Config.MAX_OPEN_BETS:
+        if open_bet_count >= max_open_bets:
             # We hit our concurrent max limit
             break
             
@@ -85,7 +90,7 @@ def process_live_odds(parsed_games: list) -> list:
         
         is_arb, combined_prob, profit_margin = detect_arbitrage([odds_a, odds_b])
         
-        if is_arb and profit_margin >= Config.MIN_PROFIT_MARGIN:
+        if is_arb and profit_margin >= min_profit_margin:
             is_suspicious = profit_margin > Config.SUSPICIOUS_PROFIT_MARGIN
             
             stake_a, stake_b, guaranteed_profit, profit_pct = calculate_arb_stakes_from_max_stake(
