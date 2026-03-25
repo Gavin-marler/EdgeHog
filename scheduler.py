@@ -51,10 +51,10 @@ async def daily_pnl_job():
 def get_scheduler() -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler(timezone=ZoneInfo("America/Chicago"))
     
-    # Poll odds every 5 minutes from 18:00 to 23:59
+    # Poll odds every 5 minutes from 10:00 am to 4:00 pm CT
     scheduler.add_job(
         poll_odds_job,
-        CronTrigger(hour='18-23', minute='*/5'),
+        CronTrigger(hour='10-16', minute='*/5'),
         id="poll_odds_job"
     )
     

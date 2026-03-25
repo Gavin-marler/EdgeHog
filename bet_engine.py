@@ -66,7 +66,9 @@ def process_live_odds(parsed_games: list) -> list:
     
     max_stake_allowed = current_bankroll * max_stake_pct
     
+    games_scanned = 0
     for game in parsed_games:
+        games_scanned += 1
         if open_bet_count >= max_open_bets:
             # We hit our concurrent max limit
             break
@@ -148,4 +150,5 @@ def process_live_odds(parsed_games: list) -> list:
                 new_alerts.append(bet_data)
                 logger.warning(f"Suspicious arb detected ({profit_pct*100:.2f}%) on {team_a} vs {team_b}.")
                 
+    logger.info(f"Scanned {games_scanned} games in this poll.")
     return new_alerts
