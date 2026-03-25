@@ -15,3 +15,5 @@ See `.env.example` to set up your `.env` file containing necessary API keys.
 
 ## Deployment
 Use `deploy.sh` to install dependencies and install the `edgehog` systemd service to run in the background on a Raspberry Pi.
+
+This is a test change.
