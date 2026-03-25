@@ -10,6 +10,7 @@ except ImportError:
 import odds_poller
 import bet_engine
 import settlement
+import database
 from discord_bot import send_arb_alert, send_settlement_alert, send_daily_pnl
 
 logger = logging.getLogger(__name__)
