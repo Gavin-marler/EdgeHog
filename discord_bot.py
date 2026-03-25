@@ -82,10 +82,10 @@ async def send_daily_pnl():
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ **Access Denied:** You must be a server administrator to use this command.")
-    elif isinstance(error, commands.BadArgument):
-        await ctx.send("❌ **Invalid Input:** Please check your command formatting and numeric arguments.")
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("❓ Unknown command. Type `!help` to see all available commands.")
+    elif isinstance(error, commands.CheckFailure):
+        await ctx.send("🚫 You don't have permission to use this command.")
     else:
         logger.error(f"Command error: {error}")
 
